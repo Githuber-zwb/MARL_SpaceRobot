@@ -44,5 +44,6 @@ for e_step in range(20):
         # print(observation["observation"])
         if i_step == 0:
             print(reward)
+            print(observation["desired_goal"])
 
 env.close()
