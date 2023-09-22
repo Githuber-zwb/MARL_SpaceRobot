@@ -3,7 +3,7 @@ import gym
 import SpaceRobotEnv
 import numpy as np
 
-env = gym.make("SpaceRobotDualArmWithRot-v0")
+env = gym.make("SpaceRobotReorientation-v0")
 print(env.sim.data.qpos)
 # print(env.initial_state)
 action = np.zeros(12,)
@@ -41,7 +41,7 @@ for e_step in range(20):
         # env.render("rgb_array")
         # action = np.random.uniform(low=-1.0, high=1.0, size=(dim_u,))
         observation, reward, done, info = env.step(max_action * action)
-        print(observation["observation_1"])
+        # print(observation["observation"])
         if i_step == 0:
             print(reward)
 

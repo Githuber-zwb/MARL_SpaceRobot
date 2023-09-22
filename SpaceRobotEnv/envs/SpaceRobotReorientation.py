@@ -81,6 +81,8 @@ class RobotEnv(gym.GoalEnv):
         return [seed]
 
     def step(self, action):
+        assert action.shape == (12,)
+        old_action = self.sim.data.ctrl.copy() * (1 / 0.8)
         action = np.clip(action, self.action_space.low, self.action_space.high)
         self._set_action(action)  # do one step simulation here
         self._step_callback()
@@ -89,7 +91,9 @@ class RobotEnv(gym.GoalEnv):
         info = {
             "is_success": self._is_success(obs["achieved_goal"], self.goal)
         }
-        reward = self.compute_reward(obs["achieved_goal"], self.goal, info)
+        reward = self.compute_reward(
+            obs["achieved_goal"], self.goal.copy(), action, old_action, info
+        )
         # reward = self.compute_reward(obs['achieved_goal'], self.goal, info) + self.compute_reward(obs['achieved_goal1'], self.goal1, info)
         return obs, reward, done, info
 
@@ -248,13 +252,14 @@ class SpacerobotEnv(RobotEnv):
             initial_qpos=initial_qpos,
         )
 
-    def compute_reward(self, achieved_goal, desired_goal, info):
+    def compute_reward(self, achieved_goal, desired_goal, act, old_act, info):
         # Compute distance between goal and the achieved goal.
         d = goal_distance(achieved_goal, desired_goal)
+        loss = np.linalg.norm(act - old_act)**2
 
         reward = {
             "sparse": -(d > self.distance_threshold).astype(np.float32),
-            "dense": -(0.001 * d ** 2 + np.log10(d ** 2 + 1e-6)),
+            "dense": -(0.001 * d ** 2 + np.log10(d ** 2 + 1e-6) + 0.01 * loss),
         }
 
         return reward
@@ -266,8 +271,8 @@ class SpacerobotEnv(RobotEnv):
         :param action: angle velocity of joints
         :return: angle velocity of joints
         """
-        assert action.shape == (12,)
-        self.sim.data.ctrl[:] = action * 0.5
+        act = action.copy()
+        self.sim.data.ctrl[:] = act * 0.8
         for _ in range(self.n_substeps):
             self.sim.step()
 
@@ -290,19 +295,70 @@ class SpacerobotEnv(RobotEnv):
         achieved_goal1 = np.concatenate([grip_pos1.copy(),grip_rot1.copy()]) 
         """
         post_base_att = self.sim.data.get_body_xquat('chasersat')
+        post_base_att = rotations.quat2euler(post_base_att)     
+
+        qpos_tem = self.sim.data.qpos[:19].copy()
+        qvel_tem = self.sim.data.qvel[:18].copy()
 
         obs = np.concatenate(
             [
-                self.sim.data.qpos[:].copy(),
-                self.sim.data.qvel[:].copy(),
+                qpos_tem,
+                qvel_tem,
+                post_base_att, 
                 self.goal.copy(),
             ]
         )
+        ob0 = np.concatenate(
+            [
+                qpos_tem[:10].copy(),
+                qvel_tem[:9].copy(),
+                post_base_att.copy(),
+                self.goal.copy()
+            ]
+        )
+
+        ob1 = np.concatenate(
+            [
+                qpos_tem[:7].copy(),
+                qpos_tem[10:13].copy(),
+                qvel_tem[:6].copy(),
+                qvel_tem[9:12].copy(),
+                post_base_att.copy(),
+                self.goal.copy()
+            ]
+        )
+
+        ob2 = np.concatenate(
+            [
+                qpos_tem[:7].copy(),
+                qpos_tem[13:16].copy(),
+                qvel_tem[:6].copy(),
+                qvel_tem[12:15].copy(),
+                post_base_att.copy(),
+                self.goal.copy()
+            ]
+        )
+
+        ob3 = np.concatenate(
+            [
+                qpos_tem[:7].copy(),
+                qpos_tem[16:19].copy(),
+                qvel_tem[:6].copy(),
+                qvel_tem[15:18].copy(),
+                post_base_att.copy(),
+                self.goal.copy()
+            ]
+        )
+
 
         return {
             "observation": obs.copy(),
             "achieved_goal": post_base_att.copy(),
             "desired_goal": self.goal.copy(),
+            "observation_0":ob0.copy(),
+            "observation_1":ob1.copy(),
+            "observation_2":ob2.copy(),
+            "observation_3":ob3.copy()
         }
 
     def _viewer_setup(self):
@@ -321,7 +377,10 @@ class SpacerobotEnv(RobotEnv):
         return True
 
     def _sample_goal(self):
-        goal = self.initial_base_att 
+        goal = np.array([0,0,0],dtype=np.float32)
+        goal[0] = self.initial_base_att[0] + np.random.uniform(-0.50, 0.50)
+        goal[1] = self.initial_base_att[1] + np.random.uniform(-0.50, 0.50)
+        goal[2] = self.initial_base_att[2] + np.random.uniform(-0.50, 0.50)
 
         return goal.copy()
 
@@ -331,30 +390,16 @@ class SpacerobotEnv(RobotEnv):
         # return d
 
     def _env_setup(self, initial_qpos):
-        
-        # set qpos of chasersat 
-        chasersat_pos = [0.,0.,4.] # init pos of base
-        chasersat_ori = np.random.rand(3) * 0.5 # initial base att range[0,1)
-        chasersat_quat = rotations.euler2quat(chasersat_ori)
-        initial_qpos['chasersat:joint'] = list(chasersat_pos) + list(chasersat_quat) 
-        # print('initial qpos of base is {}'.format(initial_qpos['chasersat:joint']))
-
         for name, value in initial_qpos.items():
             self.sim.data.set_joint_qpos(name, value)
         utils.reset_mocap_welds(self.sim)
 
-        # Extract information for sampling goals.
-        self.initial_gripper_xpos = self.sim.data.get_body_xpos("tip_frame").copy()
-        self.initial_gripper_xpos1 = self.sim.data.get_body_xpos("tip_frame1").copy()
-
         # get the initial base attitude
-        self.initial_base_att = self.sim.data.get_body_xquat("chasersat").copy()
+        initial_base_att = self.sim.data.get_body_xquat("chasersat").copy()
+        self.initial_base_att = rotations.quat2euler(initial_base_att)
 
         # get the initial base position
         self.initial_base_pos = self.sim.data.get_body_xpos("chasersat").copy()
-        # print('initial base att is {}'.format(self.initial_base_att))
-        # print('initial base pos is {}'.format(self.initial_base_pos))
-        # print('initial pos is {}'.format(self.sim.data.qpos[:]))
 
     def render(self, mode="human", width=500, height=500):
         return super(SpacerobotEnv, self).render(mode, width, height)

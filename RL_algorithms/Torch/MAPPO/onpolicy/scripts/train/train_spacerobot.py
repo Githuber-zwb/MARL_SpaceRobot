@@ -17,15 +17,14 @@ sys.path.append(parent_dir)
 sys.path.append(parent_dir+"/RL_algorithms/Torch/MAPPO/onpolicy")
 
 from onpolicy.config import get_config
-from onpolicy.envs.spacerobot.SpaceRobotDualArmWithRot_env import DualArmWithRot # test if less agents work
-# from envs.spacerobot.SpaceRobotDualArmWithRot_env import DualArmWithRot # four agents environment
+from onpolicy.envs.spacerobot.SpaceRobotDualArmBaseRot_env import DualArmBaseRot 
 from onpolicy.envs.env_wrappers import SubprocVecEnv, DummyVecEnv
 
 def make_train_env(all_args):
     def get_env_fn(rank):
         def init_env():
             if all_args.env_name == "SpaceRobotEnv":
-                env = DualArmWithRot(all_args)
+                env = DualArmBaseRot(all_args)
             else:
                 print("Can not support the " +
                       all_args.env_name + " environment.")
@@ -43,7 +42,7 @@ def make_eval_env(all_args):
     def get_env_fn(rank):
         def init_env():
             if all_args.env_name == "SpaceRobotEnv":
-                env = DualArmWithRot(all_args)
+                env = DualArmBaseRot(all_args)
             else:
                 print("Can not support the " +
                       all_args.env_name + " environment.")

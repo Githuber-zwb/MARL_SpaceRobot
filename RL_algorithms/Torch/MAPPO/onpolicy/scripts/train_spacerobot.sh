@@ -1,7 +1,7 @@
 #!/bin/sh
 # exp param
 env="SpaceRobotEnv"
-scenario="SpaceRobotDualArmWithRot"
+scenario="SpaceRobotDualArmBaseRot"
 algo="mappo" # "rmappo" "ippo"
 exp="FourAgents"
 
