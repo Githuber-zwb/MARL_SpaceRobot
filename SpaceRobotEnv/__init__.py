@@ -37,7 +37,7 @@ register(
 register(
     id="SpaceRobotReorientation-v0",
     entry_point="SpaceRobotEnv.envs:SpaceRobotReorientation",
-    max_episode_steps=512,
+    max_episode_steps=1000,
 )
 
 register(

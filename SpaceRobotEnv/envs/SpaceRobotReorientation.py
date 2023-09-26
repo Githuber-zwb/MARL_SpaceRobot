@@ -82,7 +82,7 @@ class RobotEnv(gym.GoalEnv):
 
     def step(self, action):
         assert action.shape == (12,)
-        old_action = self.sim.data.ctrl.copy() * (1 / 0.8)
+        old_action = self.sim.data.ctrl.copy() * (1 / 0.5)
         action = np.clip(action, self.action_space.low, self.action_space.high)
         self._set_action(action)  # do one step simulation here
         self._step_callback()
@@ -255,11 +255,12 @@ class SpacerobotEnv(RobotEnv):
     def compute_reward(self, achieved_goal, desired_goal, act, old_act, info):
         # Compute distance between goal and the achieved goal.
         d = goal_distance(achieved_goal, desired_goal)
-        loss = np.linalg.norm(act - old_act)**2
+        loss1 = np.linalg.norm(act - old_act)**2
+        loss2 = np.linalg.norm(act) ** 2
 
         reward = {
             "sparse": -(d > self.distance_threshold).astype(np.float32),
-            "dense": -(0.001 * d ** 2 + np.log10(d ** 2 + 1e-6) + 0.01 * loss),
+            "dense": -(0.001 * d ** 2 + np.log10(d ** 2 + 1e-6) + 0.01 * loss1 + 0.05 * loss2),
         }
 
         return reward
@@ -272,7 +273,7 @@ class SpacerobotEnv(RobotEnv):
         :return: angle velocity of joints
         """
         act = action.copy()
-        self.sim.data.ctrl[:] = act * 0.8
+        self.sim.data.ctrl[:] = act * 0.5
         for _ in range(self.n_substeps):
             self.sim.step()
 
@@ -378,9 +379,9 @@ class SpacerobotEnv(RobotEnv):
 
     def _sample_goal(self):
         goal = np.array([0,0,0],dtype=np.float32)
-        goal[0] = self.initial_base_att[0] + np.random.uniform(-0.50, 0.50)
-        goal[1] = self.initial_base_att[1] + np.random.uniform(-0.50, 0.50)
-        goal[2] = self.initial_base_att[2] + np.random.uniform(-0.50, 0.50)
+        goal[0] = self.initial_base_att[0] + np.random.uniform(-0.10, 0.10)
+        goal[1] = self.initial_base_att[1] + np.random.uniform(-0.10, 0.10)
+        goal[2] = self.initial_base_att[2] + np.random.uniform(-0.10, 0.10)
 
         return goal.copy()
 

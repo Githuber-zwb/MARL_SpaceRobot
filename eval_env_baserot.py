@@ -14,7 +14,7 @@ parent_dir = os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.append(parent_dir)
 sys.path.append(parent_dir+"/RL_algorithms/Torch/MAPPO/onpolicy")
 from onpolicy.algorithms.r_mappo.algorithm.r_actor_critic import R_Actor
-from onpolicy.envs.spacerobot.SpaceRobotDualArmWithRot_env import DualArmWithRot
+from onpolicy.envs.spacerobot.SpaceRobotDualArmBaseRot_env import DualArmBaseRot
 from onpolicy.config import get_config
 
 def _t2n(x):
@@ -52,7 +52,7 @@ def main(args):
     else:
         raise NotImplementedError
 
-    env = DualArmWithRot(all_args)
+    env = DualArmBaseRot(all_args)
     eval_episode_rewards = []
     actors = []
     obs = env.reset()
@@ -62,7 +62,7 @@ def main(args):
 
     for i in range(all_args.num_agents):
         act = R_Actor(all_args,env.observation_space[i],env.action_space[i])
-        act.load_state_dict(torch.load("./RL_algorithms/Torch/MAPPO/onpolicy/scripts/results/SpaceRobotEnv/SpaceRobotDualArmWithRot/mappo/FourAgents/run6/models/actor_agent"+str(i)+".pt"))
+        act.load_state_dict(torch.load("./RL_algorithms/Torch/MAPPO/onpolicy/scripts/results/SpaceRobotEnv/SpaceRobotDualArmBaseRot/mappo/FourAgents/run1/models/actor_agent"+str(i)+".pt"))
         actors.append(act)
         # print(act.act.action_out.logstd._bias)
 
@@ -76,9 +76,9 @@ def main(args):
                 actor = actors[agent_id]
                 actor.eval()
                 # print(actor.act.action_out.logstd._bias)
-                print("observation: ",np.array(list(obs[agent_id,:])).reshape(1,31),)
+                print("observation: ",np.array(list(obs[agent_id,:])).reshape(1,25),)
                 eval_action,_,rnn_states_actor = actor(
-                    np.array(list(obs[agent_id,:])).reshape(1,31),
+                    np.array(list(obs[agent_id,:])).reshape(1,25),
                     eval_rnn_states,
                     eval_masks,
                     deterministic=True,
