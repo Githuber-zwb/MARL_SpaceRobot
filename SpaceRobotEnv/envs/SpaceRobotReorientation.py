@@ -86,13 +86,14 @@ class RobotEnv(gym.GoalEnv):
         action = np.clip(action, self.action_space.low, self.action_space.high)
         self._set_action(action)  # do one step simulation here
         self._step_callback()
+        colli = self._detecte_collision()
         obs = self._get_obs()
         done = False
         info = {
             "is_success": self._is_success(obs["achieved_goal"], self.goal)
         }
         reward = self.compute_reward(
-            obs["achieved_goal"], self.goal.copy(), action, old_action, info
+            obs["achieved_goal"], self.goal.copy(), action, old_action, colli, info
         )
         # reward = self.compute_reward(obs['achieved_goal'], self.goal, info) + self.compute_reward(obs['achieved_goal1'], self.goal1, info)
         return obs, reward, done, info
@@ -252,7 +253,7 @@ class SpacerobotEnv(RobotEnv):
             initial_qpos=initial_qpos,
         )
 
-    def compute_reward(self, achieved_goal, desired_goal, act, old_act, info):
+    def compute_reward(self, achieved_goal, desired_goal, act, old_act, colli, info):
         # Compute distance between goal and the achieved goal.
         d = goal_distance(achieved_goal, desired_goal)
         loss1 = np.linalg.norm(act - old_act)**2
@@ -260,7 +261,7 @@ class SpacerobotEnv(RobotEnv):
 
         reward = {
             "sparse": -(d > self.distance_threshold).astype(np.float32),
-            "dense": -(0.001 * d ** 2 + np.log10(d ** 2 + 1e-6) + 0.01 * loss1 + 0.05 * loss2),
+            "dense": -(0.001 * d ** 2 + np.log10(d ** 2 + 1e-6) + 0.01 * loss1 + 0.05 * loss2 + colli),
         }
 
         return reward
