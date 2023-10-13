@@ -7,7 +7,7 @@ env = gym.make("SpaceRobotReorientation-v0")
 print(env.sim.data.qpos)
 # print(env.initial_state)
 action = np.zeros(12,)
-# action[4] = 1
+action[0] = 1
 env.sim.data.ctrl[:] = action
 env.sim.step()
 print(env.sim.data.qpos)

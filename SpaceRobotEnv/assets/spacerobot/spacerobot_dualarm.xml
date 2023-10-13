@@ -33,7 +33,7 @@
         <site name="body" pos="0 0 4" size="0.4726 0.4726 0.4726" rgba="1 0 0 0.4" type="box"></site>
         <body name="chasersat" pos="0 0 4">
             <freejoint name="chasersat:joint" />
-            <geom name="chasersat" mass="400" pos="0 0 0" size="0.4726 0.4726 0.4726" type="box" />
+            <geom name="chasersat" mass="150" pos="0 0 0" size="0.4726 0.4726 0.4726" type="box" />
             <site name="chasersat" pos="0 0 0" euler="0 0 0" size="0.01 0.01 0.01" type="box" />
 
             <body name="chasersat_base1" pos="0.3 0.5526 0.08" euler="-1.5707963 0 0">

@@ -261,7 +261,7 @@ class SpacerobotEnv(RobotEnv):
 
         reward = {
             "sparse": -(d > self.distance_threshold).astype(np.float32),
-            "dense": -(0.001 * d ** 2 + np.log10(d ** 2 + 1e-6) + 0.01 * loss1 + 0.05 * loss2 + colli),
+            "dense": -(np.log10(d ** 2 + 1e-6) + 0.01 * loss1 + 0.05 * loss2 + 0.5 * colli),
         }
 
         return reward
@@ -380,9 +380,9 @@ class SpacerobotEnv(RobotEnv):
 
     def _sample_goal(self):
         goal = np.array([0,0,0],dtype=np.float32)
-        goal[0] = self.initial_base_att[0] + np.random.uniform(-0.10, 0.10)
-        goal[1] = self.initial_base_att[1] + np.random.uniform(-0.10, 0.10)
-        goal[2] = self.initial_base_att[2] + np.random.uniform(-0.10, 0.10)
+        goal[0] = self.initial_base_att[0] + np.random.uniform(-0.20, 0.20)
+        goal[1] = self.initial_base_att[1] + np.random.uniform(-0.20, 0.20)
+        goal[2] = self.initial_base_att[2] + np.random.uniform(-0.20, 0.20)
 
         return goal.copy()
 
