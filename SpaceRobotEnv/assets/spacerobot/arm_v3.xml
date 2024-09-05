@@ -3,12 +3,9 @@
 <!-- "0.5 0.5 -0.5 0.5" = [ x: 1.5707963(90), y: 0, z: 1.5707963(90) ]-->
 <mujoco>
     <body name="base_link" pos="0 0 0" euler="0 0 3.1415927">
-        <!--base_link is fixed in the base so that the motion of the arm will affect the base-->
         <inertial pos="-0.00083 0 0.00758" mass="4" diaginertia="0.00443333 0.00443333 0.0072" />
         <geom name="v_base_link" type="mesh" group="1" mesh="v_base" euler="0 0 -1.5707963" />
 
-        <!-- joint 1 : a joint creates motion degrees of freedom between the body where it is defined and the body's parent
-            joint 1 defines the relation of the motions between link1 and link0-->
         <body name="shoulder_link" pos="0 0 0.089159" euler="1.5707963 0 0">
             <inertial pos="0 -0.02561 0.00193" mass="3.7" diaginertia="0.0067 0.0064 0.0067" />
             <joint class="arm1" name="arm:shoulder_pan_joint" axis="0 1 0" pos="0 -0.02561 0" />

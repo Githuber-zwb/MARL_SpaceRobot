@@ -151,7 +151,7 @@ class RobotEnv(gym.GoalEnv):
                 self._viewer_setup()
                 # self.viewer.cam.trackbodyid = 0
                 # latest modification
-                cam_pos = np.array([0, 0, 4, 4.2, -15, 160])
+                cam_pos = np.array([0, 0, 4, 4.5, -15, 160])
                 for i in range(3):
                     self.viewer.cam.lookat[i] = cam_pos[i]
                 self.viewer.cam.distance = cam_pos[3]
@@ -412,9 +412,15 @@ class SpacerobotEnv(RobotEnv):
 
     def _sample_goal(self):
         goal = np.array([0, 0, 0], dtype=np.float32)
-        goal[0] = self.initial_base_att[0] + np.random.uniform(-0.40, 0.40)
-        goal[1] = self.initial_base_att[1] + np.random.uniform(-0.40, 0.40)
-        goal[2] = self.initial_base_att[2] + np.random.uniform(-0.40, 0.40)
+        goal[0] = self.initial_base_att[0] + np.random.uniform(-0.20, 0.20)
+        goal[1] = self.initial_base_att[1] + np.random.uniform(-0.20, 0.20)
+        goal[2] = self.initial_base_att[2] + np.random.uniform(-0.20, 0.20)
+        # goal = np.array([ 0.13556402, 0.05914702, 0.17039675], dtype=np.float32)    # for base reorien
+        # goal = np.array([ 0.14659178, -0.17116393, -0.1308143], dtype=np.float32)    # for base reorien
+        # goal = np.array([ -0.14199046,  0.0625984,-0.08739748], dtype=np.float32) # for mixed gaol
+        # goal = np.array([ -0.10384867,  0.0840958,   0.13542515], dtype=np.float32) # for one arm fail
+        # goal = np.array([ 0.02927297, -0.03530861,  0.1957922], dtype=np.float32) # for disturbance and fail
+        # goal = np.array([-0.01181555,  0.00485107, -0.1481193 ], dtype=np.float32) # for mixed gaol dual stage
         site_id = self.sim.model.site_name2id("targetbase")
         self.sim.model.site_pos[site_id] = np.array([0, 0, 4], dtype=np.float32)
         self.sim.model.site_quat[site_id] = rotations.euler2quat(goal.copy())

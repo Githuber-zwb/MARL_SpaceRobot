@@ -7,6 +7,9 @@ import torch
 import sys
 import os
 from gym import spaces
+from PIL import Image 
+import matplotlib.pyplot as plt
+from gym.envs.robotics import rotations
 
 # os.environ["MUJOCO_GL"] = "egl"
 
@@ -19,6 +22,10 @@ from onpolicy.config import get_config
 
 def _t2n(x):
     return x.detach().cpu().numpy()
+
+def goal_distance(goal_a, goal_b):
+    assert goal_a.shape == goal_b.shape
+    return np.linalg.norm(goal_a - goal_b, axis=-1)
 
 def parse_args(args, parser):
     parser.add_argument("--scenario_name", type=str,
@@ -74,15 +81,23 @@ def main(args):
         # print(act.act.action_out.logstd._bias)
 
     frames = []
+    x = np.linspace(0, 19.9, 200)
+    y = np.zeros(200)
+    dist_time = [i for i in range(50,55)]
     print("init goal:", env.env.goal)
 
     with torch.no_grad():
         # print(env.env.initial_gripper1_pos,env.env.initial_gripper1_rot,env.env.initial_gripper2_pos,env.env.initial_gripper2_rot)
         for eval_step in range(all_args.episode_length):
+            env_goal = env.env.goal
             print("step: ",eval_step)
+            # env.env.render()
             img = env.env.render("rgb_array")
             frames.append(img)
             action = []
+            # if eval_step == 0 or eval_step == 5 or eval_step == 10 or eval_step == 20:
+            #     adv = Image.fromarray(np.uint8(img))
+            #     adv.save(str(parent_dir) + "/render/base_reorien/fig%d.jpg" %eval_step, quality = 100)
             # print("observation: ",np.array(list(obs[0,:])).reshape(1,25))
             for agent_id in range(all_args.num_agents):
                 actor = actors[agent_id]
@@ -99,30 +114,43 @@ def main(args):
                 # print("step: ",eval_step,"action: ",eval_action)
                 action.append(eval_action)
 
-            obs, eval_rewards, done, infos = env.step(np.stack(action).squeeze().reshape(all_args.num_agents,3))
+            ob_i = np.array(list(obs[0,:])).reshape(25,)
+            error_i = goal_distance(ob_i[19:22], env_goal)
+            y[eval_step] = error_i
+
+            exert_action = np.stack(action).squeeze().reshape(all_args.num_agents,3)
+            if eval_step in dist_time:  # disturbance
+                exert_action = np.ones([8,3])
+            # exert_action[6,:] = np.zeros(3)
+            # exert_action[7,:] = np.zeros(3)
+            obs, eval_rewards, done, infos = env.step(exert_action)
+
+            # reset attitude of base 
+            # if eval_step == 80:
+            #     goal = np.array([ 0, 0, 0], dtype=np.float32)
+            #     site_id = env.env.sim.model.site_name2id("targetbase")
+            #     env.env.sim.model.site_pos[site_id] = np.array([0, 0, 4], dtype=np.float32)
+            #     env.env.sim.model.site_quat[site_id] = rotations.euler2quat(goal.copy())
+            #     env.env.goal = goal
+            #     env.env.sim.forward()
             print("reward: ",eval_rewards)
             # print("action: ",np.stack(action).squeeze().reshape(all_args.num_agents,3))
             eval_episode_rewards.append(eval_rewards)
         print("episode reward: ",np.array(eval_episode_rewards).sum())
         
+        # np.save('fig_plot/error_base_rot.npy', y)
+        # plt.plot(x, y, label = "error" )
+        # plt.legend()
+        # plt.show()
+        # plt.savefig('sim1.png')
+        
     print("goal:, ", env.env.goal)
     imageio.mimsave(
-        str(parent_dir) + "/render_base_rot.gif",
+        str(parent_dir) + "/render/base_reorien/render_base_rot_dist1.mp4",
         frames,
-        duration=0.01,
+        # duration=0.01,
     )
-        
-        # writer = imageio.get_writer(parent_dir + "/render.gif")
-        # # print('reward is {}'.format(self.reward_lst))
-        # for frame, reward in zip(frames, eval_episode_rewards):
-        #     print(eval_step)
-        #     frame = Image.fromarray(frame)
-        #     draw = ImageDraw.Draw(frame)
-        #     draw.text((70, 70), '{}'.format(reward), fill=(255, 255, 255))
-        #     frame = np.array(frame)
-        #     writer.append_data(frame)
-        # writer.close()
-        # env.close()
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

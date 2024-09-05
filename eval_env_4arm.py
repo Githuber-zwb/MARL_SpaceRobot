@@ -8,6 +8,9 @@ import sys
 import os
 from gym import spaces
 import matplotlib.pyplot as plt
+from PIL import Image 
+import csv
+import pandas as pd
 
 # os.environ["MUJOCO_GL"] = "egl"
 
@@ -79,21 +82,21 @@ def main(args):
         # print(act.act.action_out.logstd._bias)
 
     frames = []
-    print("init goal:", env.env.goal)
-#     env.env.goal = np.array([
-#     0.29432666,  1.3777534,   4.3778887,   0.16373104,  0.23992744,  0.05128532,
-#     0.4315827,  -1.2804029,   4.2666655,   0.03040494,  0.11790288, -0.04894744,
-#     0.27814835,  0.29937622,  5.246062,   -1.0688201,   0.339479,    0.16324279,
-#     0.43091363,  0.28066614,  2.7131298,  -0.89631516,  0.00982002, -0.03541239
-# ])
-#     print("changed goal: ", env.env.goal)
+    data = []
     
     x = np.linspace(0, 19.9, 200)
     y = np.zeros([8, 200])
+    dist_time = [i for i in range(50, 51)]
+    error = np.zeros([6,200])
+    env_goal = env.env.goal
 
+    # with open('data.csv','w') as csvfile:
+    #     fieldnames = ['state','action','reward','next_state']
+    #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    #     writer.writeheader()
 
     with torch.no_grad():
-        # print(env.env.initial_gripper1_pos,env.env.initial_gripper1_rot,env.env.initial_gripper2_pos,env.env.initial_gripper2_rot)
+        print(env.env.initial_gripper1_pos,env.env.initial_gripper1_rot,env.env.initial_gripper2_pos,env.env.initial_gripper2_rot)
         env_goal = env.env.goal
         for eval_step in range(all_args.episode_length):
             print("step: ",eval_step)
@@ -101,14 +104,19 @@ def main(args):
             # env.env.render()
             frames.append(img)
             action = []
+            # if eval_step == 0 or eval_step == 10 or eval_step == 40 or eval_step == 100:
+            #     adv = Image.fromarray(np.uint8(img))
+            #     adv.save(str(parent_dir) + "/render/traj_planning/fig%d.jpg" %eval_step, quality = 100)
             for agent_id in range(all_args.num_agents):
                 actor = actors[agent_id]
                 actor.eval()
-                # print(actor.act.action_out.logstd._bias)
-                # print("observation: ",np.array(list(obs[agent_id,:])).reshape(1,31),)
                 ob_i = np.array(list(obs[agent_id,:])).reshape(31,)
-                error_i = goal_distance(ob_i[19:22], env_goal[agent_id * 3: (agent_id + 1) * 3])
-                y[agent_id, eval_step] = error_i
+                if agent_id == 2: 
+                    error_p = ob_i[19:22] - env_goal[6:9]
+                    error[0:3, eval_step] = error_p
+                if agent_id == 3: 
+                    error_r = ob_i[19:22] - env_goal[9:12]
+                    error[3:6, eval_step] = error_r
                 eval_action,_,rnn_states_actor = actor(
                     np.array(list(obs[agent_id,:])).reshape(1,31),
                     eval_rnn_states,
@@ -119,22 +127,33 @@ def main(args):
                 # print("step: ",eval_step,"action: ",eval_action)
                 action.append(eval_action)
 
-            obs, eval_rewards, done, infos = env.step(np.stack(action).squeeze().reshape(all_args.num_agents,3))
+            # Apply external disturbance
+            exert_action = np.stack(action).squeeze().reshape(all_args.num_agents,3)
+            if eval_step in dist_time:
+                exert_action[2,1] =1.3
+            old_obs = obs
+            obs, eval_rewards, done, infos = env.step(exert_action)
+            data.append({'state':old_obs[4,:],'action':exert_action[4,:],'reward':eval_rewards[4],'nest_state':obs[4,:]})
             print("reward: ",eval_rewards)
             # print("action: ",np.stack(action).squeeze().reshape(all_args.num_agents,3))
             eval_episode_rewards.append(eval_rewards)
         print("episode reward: ",np.array(eval_episode_rewards).sum())
+        # print(data)
+        # df = pd.DataFrame(data)
+        # df.to_csv('data4.csv', index=False)
         
     print("goal:, ", env.env.goal)
-    for i in range(8):
-        plt.plot(x, y[i,:], label = "error %d" %i)
-    plt.legend()
-    plt.savefig('sim1.png')
+    # print(error)
+    # np.save("fig_plot/error_4arm_dist.npy", error)
+    # for i in range(8):
+    #     plt.plot(x, y[i,:], label = "error %d" %i)
+    # plt.legend()
+    # plt.savefig('sim1.png')
 
     imageio.mimsave(
-        str(parent_dir) + "/render.gif",
+        str(parent_dir) + "/render/traj_planning/render_4arm_distur1.mp4",
         frames,
-        duration=0.01,
+        # duration=0.01,
     )
         
         # writer = imageio.get_writer(parent_dir + "/render.gif")

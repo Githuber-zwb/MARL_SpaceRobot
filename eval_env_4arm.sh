@@ -15,7 +15,7 @@ episode_length=200
 
 echo "env is ${env}, scenario is ${scenario}, algo is ${algo}, exp is ${exp}, num agents is ${num_agents}"
 
-CUDA_VISIBLE_DEVICES=0 python eval_env_4arm.py \
+CUDA_VISIBLE_DEVICES=0 python eval_env_mixed.py \
 --env_name ${env} --scenario_name ${scenario} --algorithm_name ${algo} --experiment_name ${exp} --seed 1 \
 --num_agents ${num_agents} --num_env_steps ${num_env_steps} --episode_length ${episode_length} \
 --n_rollout_threads 512  --use_wandb --share_policy --share_reward --hidden_size 512 --layer_N 2 --ppo_epoch 5 \
