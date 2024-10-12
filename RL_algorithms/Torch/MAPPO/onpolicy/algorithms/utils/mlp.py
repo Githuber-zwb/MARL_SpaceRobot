@@ -1,4 +1,6 @@
 import torch.nn as nn
+import torch
+import numpy as np
 from .util import init, get_clones
 
 """MLP modules."""
@@ -59,5 +61,45 @@ class MLPBase(nn.Module):
             x = self.feature_norm(x)
 
         x = self.mlp(x)
+
+        return x
+    
+class TransBase(nn.Module):
+    def __init__(self, args, obs_shape, cat_self=True, attn_internal=False):
+        super(TransBase, self).__init__()
+
+        self._use_feature_normalization = args.use_feature_normalization
+        self._use_orthogonal = args.use_orthogonal
+        self._use_ReLU = args.use_ReLU
+        self._stacked_frames = args.stacked_frames
+        self._layer_N = args.layer_N
+        self._num_agents = args.num_agents
+        self.hidden_size = args.hidden_size
+        self._num_envs = args.n_rollout_threads
+
+        obs_dim = obs_shape[0]
+
+        assert obs_dim % self._num_agents == 0
+        self._single_obs_dim = obs_dim // self._num_agents
+
+        if self._use_feature_normalization:
+            self.feature_norm = nn.LayerNorm(obs_dim)
+
+        self.mlp1 = nn.Linear(self._single_obs_dim, self.hidden_size)
+
+        self.enc = nn.TransformerEncoderLayer(self.hidden_size, 4, self.hidden_size)
+
+        self.mlp = MLPLayer(obs_dim, self.hidden_size,
+                              self._layer_N, self._use_orthogonal, self._use_ReLU)
+
+    def forward(self, x):
+        if self._use_feature_normalization:
+            x = self.feature_norm(x)
+        
+        x = x.reshape(-1, self._num_agents, self._single_obs_dim)
+        x = self.enc(self.mlp1(x))
+        x = torch.mean(x, dim=1)
+
+        # x = self.mlp(x)
 
         return x

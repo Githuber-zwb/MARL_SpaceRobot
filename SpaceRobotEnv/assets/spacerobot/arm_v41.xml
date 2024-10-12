@@ -42,11 +42,11 @@
                                 <geom name="v_wrist_3_link1" type="mesh" group="1" mesh="v_wrist3" pos="0 0 -0.0823" euler="1.5707963 0 0" />
                                 <site name="wrist3_site1" pos="0 0 .03" type="box" size=".01 .01 .01" />
 
-                                <!-- <body name="tip_frame1" pos="0 0 0.06">
+                                <body name="tip_frame1" pos="0 0 0.06">
                                     <site name="tip_frame1:x" pos="0.0618 0 0" size="0.01 0.0618" type="cylinder" rgba="1 0 0 1" euler="0 1.5707963 0" />
                                     <site name="tip_frame1:y" pos="0 0.0618 0" size="0.01 0.0618" type="cylinder" rgba="0 1 0 1" euler="-1.5707963 0 0" />
                                     <site name="tip_frame1:z" pos="0 0 0.0618" size="0.01 0.0618" type="cylinder" rgba="0 0 1 1" />
-                                </body> -->
+                                </body>
 
                                 <!--GRIPPER-->
                                 <body name="tool1" pos="0 0 0" euler="0 0 0">

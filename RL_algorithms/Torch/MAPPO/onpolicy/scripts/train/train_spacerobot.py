@@ -18,15 +18,15 @@ sys.path.append(parent_dir+"/RL_algorithms/Torch/MAPPO/onpolicy")
 
 from onpolicy.config import get_config
 # from onpolicy.envs.spacerobot.SpaceRobotBaseRot_env import BaseRot 
-# from onpolicy.envs.spacerobot.SpaceRobotFourArm_env import FourArm 
-from onpolicy.envs.spacerobot.SpaceRobotFourArm_env import OneAgent # test if less agents work=
+from onpolicy.envs.spacerobot.SpaceRobotFourArm_env import FourArm 
+# from onpolicy.envs.spacerobot.SpaceRobotFourArm_env import OneAgent # test if less agents work=
 from onpolicy.envs.env_wrappers import SubprocVecEnv, DummyVecEnv
 
 def make_train_env(all_args):
     def get_env_fn(rank):
         def init_env():
             if all_args.env_name == "SpaceRobotEnv":
-                env = OneAgent(all_args)
+                env = FourArm(all_args)
             else:
                 print("Can not support the " +
                       all_args.env_name + " environment.")
@@ -44,7 +44,7 @@ def make_eval_env(all_args):
     def get_env_fn(rank):
         def init_env():
             if all_args.env_name == "SpaceRobotEnv":
-                env = OneAgent(all_args)
+                env = FourArm(all_args)
             else:
                 print("Can not support the " +
                       all_args.env_name + " environment.")
@@ -67,7 +67,7 @@ def parse_args(args, parser):
     parser.add_argument("--share_reward", action='store_false', 
                         default=True, 
                         help="by default true. If false, use different reward for each agent.")
-                        
+    parser.add_argument("--use_transformer", action='store_true', default=False, help="by default False, use transformer.")
     all_args = parser.parse_known_args(args)[0]
 
     return all_args

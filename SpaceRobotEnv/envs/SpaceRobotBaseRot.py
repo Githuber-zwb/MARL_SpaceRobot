@@ -14,7 +14,7 @@ import mujoco_py
 
 PATH = os.getcwd()
 
-MODEL_XML_PATH = os.path.join(PATH,'SpaceRobotEnv','assets', 'spacerobot', 'spacerobot_fourarm.xml')
+MODEL_XML_PATH = os.path.join(PATH,'SpaceRobotEnv','assets', 'spacerobot', 'spacerobot_fourarmgrip.xml')
 DEFAULT_SIZE = 500
 
 
@@ -151,7 +151,7 @@ class RobotEnv(gym.GoalEnv):
                 self._viewer_setup()
                 # self.viewer.cam.trackbodyid = 0
                 # latest modification
-                cam_pos = np.array([0, 0, 4, 4.5, -15, 160])
+                cam_pos = np.array([0, 0.3, 4, 5, -20, 160])
                 for i in range(3):
                     self.viewer.cam.lookat[i] = cam_pos[i]
                 self.viewer.cam.distance = cam_pos[3]

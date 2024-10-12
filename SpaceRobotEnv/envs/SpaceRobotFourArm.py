@@ -596,14 +596,14 @@ class SpacerobotEnv(RobotEnv):
         # goal_rot4[1] = self.initial_gripper4_rot[1] - np.random.uniform(-0.15, 0.35) #So the target has opposite y and z.
         # goal_rot4[2] = self.initial_gripper4_rot[2] - np.random.uniform(-0.30, 0.20)
 
-        goal_pos1 = np.array([0.3569468,   1.2775239,   4.3208117])
-        goal_rot1 = np.array([0.2514714,  -0.1013594,   0.18483946])
-        goal_pos2 = np.array([0.39633986, -1.23843396,  4.23199368])
-        goal_rot2 = np.array([-0.13400188, -0.04475628,  0.12607676])
-        goal_pos3 = np.array([0.27814835,  0.29937622,  5.246062])
-        goal_rot3 = np.array([-1.0688201,   0.489479,    0.06324279])
-        goal_pos4 = np.array([0.43091363,  0.28066614,  2.7131298])
-        goal_rot4 = np.array([-1.14631516,  -0.05982002, -0.08541239])
+        # goal_pos1 = np.array([0.3569468,   1.2775239,   4.3208117])
+        # goal_rot1 = np.array([0.2514714,  -0.1013594,   0.18483946])
+        # goal_pos2 = np.array([0.39633986, -1.23843396,  4.23199368])
+        # goal_rot2 = np.array([-0.13400188, -0.04475628,  0.12607676])
+        # goal_pos3 = np.array([0.27814835,  0.29937622,  5.246062])
+        # goal_rot3 = np.array([-1.0688201,   0.489479,    0.06324279])
+        # goal_pos4 = np.array([0.43091363,  0.28066614,  2.7131298])
+        # goal_rot4 = np.array([-1.14631516,  -0.05982002, -0.08541239])
 
         """
         goal = np.concatenate((goal_pos, goal_rot)) #一维度的数据不影响

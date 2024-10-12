@@ -4,11 +4,11 @@ import SpaceRobotEnv
 import numpy as np
 from gym.envs.robotics import rotations
 
-env = gym.make("SpaceRobotFourArm-v0")
+env = gym.make("SpaceRobotBaseRot-v0")
 print(env.sim.data.qpos)
 # print(env.initial_state)
 action = np.zeros(24,)
-action[6] = 1
+# action[6] = 1
 env.sim.data.ctrl[:] = action
 env.sim.step()
 print(env.sim.data.qpos)
@@ -60,4 +60,15 @@ for e_step in range(1):
         #     from PIL import Image 
         #     adv = Image.fromarray(np.uint8(img))
         #     adv.save("render/fig4.jpg", quality = 100)
+        curr_rot = env.sim.data.get_body_xquat('targetsat').copy()
+        curr_rot = rotations.quat2euler(curr_rot)  # 3维欧拉角
+        print('curr_rot', curr_rot)
+        curr_rot1 = curr_rot + [0.0, 0.00, 0.01]  # 绕x,y,z轴旋转
+        target_id = env.sim.model.body_name2id('targetsat')  # 设置target的位置
+        env.sim.model.body_quat[target_id] = rotations.euler2quat(curr_rot1)
+        # targetsat的线速度
+        # curr_pos = self.sim.data.get_body_xpos('targetsat').copy()
+        # self.sim.model.body_pos[target_id] = curr_pos + [0.001,0,0]
+
+        env.sim.forward()
 env.close()

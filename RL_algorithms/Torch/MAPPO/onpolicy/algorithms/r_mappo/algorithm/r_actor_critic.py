@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from onpolicy.algorithms.utils.util import init, check
 from onpolicy.algorithms.utils.cnn import CNNBase
-from onpolicy.algorithms.utils.mlp import MLPBase
+from onpolicy.algorithms.utils.mlp import MLPBase, TransBase
 from onpolicy.algorithms.utils.rnn import RNNLayer
 from onpolicy.algorithms.utils.act import ACTLayer
 from onpolicy.algorithms.utils.popart import PopArt
@@ -137,7 +137,8 @@ class R_Critic(nn.Module):
         init_method = [nn.init.xavier_uniform_, nn.init.orthogonal_][self._use_orthogonal]
 
         cent_obs_shape = get_shape_from_obs_space(cent_obs_space)
-        base = CNNBase if len(cent_obs_shape) == 3 else MLPBase
+        # base = CNNBase if len(cent_obs_shape) == 3 else MLPBase
+        base = TransBase if args.use_transformer else MLPBase
         self.base = base(args, cent_obs_shape)
 
         if self._use_naive_recurrent_policy or self._use_recurrent_policy:

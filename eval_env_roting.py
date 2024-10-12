@@ -62,88 +62,108 @@ def main(args):
     env = BaseRot(all_args)
     env2 = FourArm(all_args)
 
-    error = np.zeros([3, 200])
-
-    # env.seed(all_args.seed)
-    # seed
-    # torch.manual_seed(all_args.seed)
-    # torch.cuda.manual_seed_all(all_args.seed)
-    # np.random.seed(all_args.seed)
-
     eval_episode_rewards = []
     actors = []
     obs = env.reset()
-    goal_pos3 = np.array([0.27814835,  0.29937622,  5.246062])
-    goal_rot3 = np.array([-1.5688201,   0.489479,    0.06324279])
-    # print("INITIAL: ", env2.env.initial_gripper3_rot)
-    site_id2 = env.env.sim.model.site_name2id("target2")
-    env.env.sim.model.site_pos[site_id2] = goal_pos3.copy()
-    env.env.sim.model.site_quat[site_id2] = rotations.euler2quat(goal_rot3.copy())
-    grip_pos3 = env.env.sim.data.get_body_xpos("tip_frame2").copy()
-    grip_rot3 = env.env.sim.data.get_body_xquat('tip_frame2').copy()
-    grip_rot3 = rotations.quat2euler(grip_rot3)  
-    grip_velp3 = env.env.sim.data.get_body_xvelp("tip_frame2").copy() * 0.1
-    grip_velr3 = env.env.sim.data.get_body_xvelr("tip_frame2").copy() * 0.1
+
+    # set reach goals
+    # compute current goal
+    goal_pos1 = np.array(env.env.sim.data.get_body_xpos("targethold_h3").copy())
+    goal_rot1 = np.array(rotations.quat2euler(env.env.sim.data.get_body_xquat("targethold_h3").copy()))
+    goal_pos2 = np.array(env.env.sim.data.get_body_xpos("targethold_h4").copy())
+    goal_rot2 = np.array(rotations.quat2euler(env.env.sim.data.get_body_xquat("targethold_h4").copy()))
+
+    site_id0 = env.env.sim.model.site_name2id("target0")
+    env.env.sim.model.site_pos[site_id0] = goal_pos1.copy()
+    env.env.sim.model.site_quat[site_id0] = rotations.euler2quat(goal_rot1.copy())
+    site_id1 = env.env.sim.model.site_name2id("target1")
+    env.env.sim.model.site_pos[site_id1] = goal_pos2.copy()
+    env.env.sim.model.site_quat[site_id1] = rotations.euler2quat(goal_rot2.copy())
+
+    # set base goal
+    # site_id = env.env.sim.model.site_name2id("targetbase")
+    # env.env.sim.model.site_pos[site_id] = np.array([0, 0, 4], dtype=np.float32)
+    # env.env.sim.model.site_quat[site_id] = rotations.euler2quat(np.array([0, 0, 0.1]))
+
+    # get state
+    grip_pos1 = env.env.sim.data.get_body_xpos("tip_frame").copy()
+    grip_rot1 = env.env.sim.data.get_body_xquat('tip_frame').copy()
+    grip_rot1 = rotations.quat2euler(grip_rot1)  
+    grip_velp1 = env.env.sim.data.get_body_xvelp("tip_frame").copy() * 0.1
+    grip_velr1 = env.env.sim.data.get_body_xvelr("tip_frame").copy() * 0.1
+
+    grip_pos2 = env.env.sim.data.get_body_xpos("tip_frame1").copy()
+    grip_rot2 = env.env.sim.data.get_body_xquat('tip_frame1').copy()
+    grip_rot2 = rotations.quat2euler(grip_rot2)  
+    grip_velp2 = env.env.sim.data.get_body_xvelp("tip_frame1").copy() * 0.1
+    grip_velr2 = env.env.sim.data.get_body_xvelr("tip_frame1").copy() * 0.1
+
     qpos_tem = env.env.sim.data.qpos[:31].copy()
     qvel_tem = env.env.sim.data.qvel[:30].copy()
 
-    # env.env.sim.model.site_pos["targetbase"] = np.array([0, 0, 4], dtype=np.float32)
-    # site_id_base = env.env.sim.model.site_name2id("targetbase")
-    # base_goal = np.array([-0.09956359,  0.13125233,  0.18841112])
-    # base_goal = np.array([ 0.04854799,  0.16079384, -0.04767554])
-    # base_goal = np.array([ 0.07483641, -0.04103476,  0.19101745])
-    # env.env.sim.model.site_quat[site_id_base] = rotations.euler2quat(base_goal.copy())
-
-    # the second target 
-    # goal_pos3 = np.array([0.27814835,  0.29937622,  5.246062])
-    # goal_rot3 = np.array([-1.0688201,   0.489479,    0.06324279])
-    # env.env.sim.model.site_pos[site_id1] = goal_pos3.copy()
-    # env.env.sim.model.site_quat[site_id1] = rotations.euler2quat(goal_rot3.copy())
-
-    ob4 = np.concatenate(
+    ob0 = np.concatenate(
         [
             qpos_tem[:7].copy(),
-            qpos_tem[19:22].copy(),
+            qpos_tem[7:10].copy(),
             qvel_tem[:6].copy(),
-            qvel_tem[18:21].copy(),
-            grip_pos3,
-            grip_velp3,
-            goal_pos3, 
-            goal_rot3
+            qvel_tem[6:9].copy(),
+            grip_pos1,
+            grip_velp1,
+            goal_pos1, 
+            goal_rot1
         ]
     )
 
-    ob5 = np.concatenate(
+    ob1 = np.concatenate(
         [
             qpos_tem[:7].copy(),
-            qpos_tem[22:25].copy(),
+            qpos_tem[10:13].copy(),
             qvel_tem[:6].copy(),
-            qvel_tem[21:24].copy(),
-            grip_rot3,
-            grip_velr3,
-            goal_pos3,
-            goal_rot3
+            qvel_tem[9:12].copy(),
+            grip_rot1,
+            grip_velr1,
+            goal_pos1,
+            goal_rot1
         ]
     )
 
-    error[0,0] = goal_distance(goal_pos3, ob4[19:22])
-    error[1,0] = goal_distance(goal_rot3, ob5[19:22])
-    error[2,0] = goal_distance(env.env.goal, obs[0, 19:22])
+    ob2 = np.concatenate(
+        [
+            qpos_tem[:7].copy(),
+            qpos_tem[13:16].copy(),
+            qvel_tem[:6].copy(),
+            qvel_tem[12:15].copy(),
+            grip_pos2,
+            grip_velp2,
+            goal_pos2,
+            goal_rot2
+        ]
+    )
+
+    ob3 = np.concatenate(
+        [
+            qpos_tem[:7].copy(),
+            qpos_tem[16:19].copy(),
+            qvel_tem[:6].copy(),
+            qvel_tem[15:18].copy(),
+            grip_rot2,
+            grip_velr2,
+            goal_pos2,
+            goal_rot2
+        ]
+    )
+
+    obs_new = [ob0, ob1, ob2, ob3]
 
     eval_rnn_states = np.zeros((1),dtype=np.float32)
     eval_masks = np.ones((1), dtype=np.float32)
 
     for i in range(4):
-        act = R_Actor(all_args,env.observation_space[i],env.action_space[i])
-        act.load_state_dict(torch.load("/home/zhaowenbo/Documents/MARL_SpaceRobot/RL_algorithms/Torch/MAPPO/onpolicy/scripts/results/SpaceRobotEnv/SpaceRobotBaseRot/mappo/EightAgents/run1/models/actor_agent"+str(i)+".pt"))
-        actors.append(act)
-    for i in range(4,6):
-        act = R_Actor(all_args,env2.observation_space[i],env2.action_space[i])
+        act = R_Actor(all_args,env2.observation_space[i],env.action_space[i])
         act.load_state_dict(torch.load("/home/zhaowenbo/Documents/MARL_SpaceRobot/RL_algorithms/Torch/MAPPO/onpolicy/scripts/results/SpaceRobotEnv/SpaceRobotFourArm/mappo/EightAgents/run1/models/actor_agent"+str(i)+".pt"))
         actors.append(act)
-
-    for i in range(6,8):
-        act = R_Actor(all_args,env.observation_space[i],env.action_space[i])
+    for i in range(4,8):
+        act = R_Actor(all_args,env.observation_space[i],env2.action_space[i])
         act.load_state_dict(torch.load("/home/zhaowenbo/Documents/MARL_SpaceRobot/RL_algorithms/Torch/MAPPO/onpolicy/scripts/results/SpaceRobotEnv/SpaceRobotBaseRot/mappo/EightAgents/run1/models/actor_agent"+str(i)+".pt"))
         actors.append(act)
 
@@ -154,8 +174,30 @@ def main(args):
         # print(env.env.initial_gripper1_pos,env.env.initial_gripper1_rot,env.env.initial_gripper2_pos,env.env.initial_gripper2_rot)
         for eval_step in range(all_args.episode_length):
             print("step: ",eval_step)
+
             env.env.render()
             # img = env.env.render("rgb_array")
+
+            curr_rot = env.env.sim.data.get_body_xquat('targetsat').copy()
+            curr_rot = rotations.quat2euler(curr_rot)  # 3维欧拉角
+            curr_rot1 = curr_rot + [0.0, 0.005, 0.00]  # 绕x,y,z轴旋转
+            target_id = env.env.sim.model.body_name2id('targetsat')  # 设置target的位置
+            env.env.sim.model.body_quat[target_id] = rotations.euler2quat(curr_rot1)
+
+            # compute current goal
+            goal_pos1 = np.array(env.env.sim.data.get_body_xpos("targethold_h3").copy())
+            goal_rot1 = np.array(rotations.quat2euler(env.env.sim.data.get_body_xquat("targethold_h3").copy()))
+            goal_pos2 = np.array(env.env.sim.data.get_body_xpos("targethold_h4").copy())
+            goal_rot2 = np.array(rotations.quat2euler(env.env.sim.data.get_body_xquat("targethold_h4").copy()))
+
+            site_id0 = env.env.sim.model.site_name2id("target0")
+            env.env.sim.model.site_pos[site_id0] = goal_pos1.copy()
+            env.env.sim.model.site_quat[site_id0] = rotations.euler2quat(goal_rot1.copy())
+            site_id1 = env.env.sim.model.site_name2id("target1")
+            env.env.sim.model.site_pos[site_id1] = goal_pos2.copy()
+            env.env.sim.model.site_quat[site_id1] = rotations.euler2quat(goal_rot2.copy())
+
+
             # frames.append(img)
             action = []
             # if eval_step == 0 or eval_step == 10 or eval_step == 100:
@@ -165,8 +207,18 @@ def main(args):
             for agent_id in range(4):
                 actor = actors[agent_id]
                 actor.eval()
-                # print(actor.act.action_out.logstd._bias)
-                # print("observation: ",np.array(list(obs[agent_id,:])).reshape(1,25))
+                eval_action,_,rnn_states_actor = actor(
+                    np.array(obs_new[agent_id]).reshape(1,31),
+                    eval_rnn_states,
+                    eval_masks,
+                    deterministic=True,
+                )
+                eval_action = eval_action.detach().cpu().numpy()
+                # print("step: ",eval_step,"action: ",eval_action)
+                action.append(eval_action)
+            for agent_id in range(4,8):
+                actor = actors[agent_id]
+                actor.eval()
                 eval_action,_,rnn_states_actor = actor(
                     np.array(list(obs[agent_id,:])).reshape(1,25),
                     eval_rnn_states,
@@ -176,77 +228,82 @@ def main(args):
                 eval_action = eval_action.detach().cpu().numpy()
                 # print("step: ",eval_step,"action: ",eval_action)
                 action.append(eval_action)
-            for agent_id in range(4,6):
-                actor = actors[agent_id]
-                actor.eval()
-                # print(actor.act.action_out.logstd._bias)
-                # print("observation: ",np.array(list(obs[agent_id,:])).reshape(1,25))
-                eval_action,_,rnn_states_actor = actor(
-                    ob4.reshape(1,31) if agent_id == 4 else ob5.reshape(1,31),
-                    eval_rnn_states,
-                    eval_masks,
-                    deterministic=True,
-                )
-                eval_action = eval_action.detach().cpu().numpy()
-                # print("step: ",eval_step,"action: ",eval_action)
-                action.append(eval_action)
-            for agent_id in range(6,8):
-                actor = actors[agent_id]
-                actor.eval()
-                # print(actor.act.action_out.logstd._bias)
-                # print("observation: ",np.array(list(obs[agent_id,:])).reshape(1,25))
-                eval_action,_,rnn_states_actor = actor(
-                    np.array(list(obs[agent_id,:])).reshape(1,25),
-                    eval_rnn_states,
-                    eval_masks,
-                    deterministic=True,
-                )
-                eval_action = eval_action.detach().cpu().numpy()
-                # print("step: ",eval_step,"action: ",eval_action)
-                action.append(eval_action)
-            # print(action)
+
             obs, eval_rewards, done, infos = env.step(np.stack(action).squeeze().reshape(all_args.num_agents,3))
 
-            grip_pos3 = env.env.sim.data.get_body_xpos("tip_frame2").copy()
-            grip_rot3 = env.env.sim.data.get_body_xquat('tip_frame2').copy()
-            grip_rot3 = rotations.quat2euler(grip_rot3)  
-            grip_velp3 = env.env.sim.data.get_body_xvelp("tip_frame2").copy() * 0.1
-            grip_velr3 = env.env.sim.data.get_body_xvelr("tip_frame2").copy() * 0.1
+            # get state
+            grip_pos1 = env.env.sim.data.get_body_xpos("tip_frame").copy()
+            grip_rot1 = env.env.sim.data.get_body_xquat('tip_frame').copy()
+            grip_rot1 = rotations.quat2euler(grip_rot1)  
+            grip_velp1 = env.env.sim.data.get_body_xvelp("tip_frame").copy() * 0.1
+            grip_velr1 = env.env.sim.data.get_body_xvelr("tip_frame").copy() * 0.1
+
+            grip_pos2 = env.env.sim.data.get_body_xpos("tip_frame1").copy()
+            grip_rot2 = env.env.sim.data.get_body_xquat('tip_frame1').copy()
+            grip_rot2 = rotations.quat2euler(grip_rot2)  
+            grip_velp2 = env.env.sim.data.get_body_xvelp("tip_frame1").copy() * 0.1
+            grip_velr2 = env.env.sim.data.get_body_xvelr("tip_frame1").copy() * 0.1
+
             qpos_tem = env.env.sim.data.qpos[:31].copy()
             qvel_tem = env.env.sim.data.qvel[:30].copy()
-            ob4 = np.concatenate(
+
+            ob0 = np.concatenate(
                 [
                     qpos_tem[:7].copy(),
-                    qpos_tem[19:22].copy(),
+                    qpos_tem[7:10].copy(),
                     qvel_tem[:6].copy(),
-                    qvel_tem[18:21].copy(),
-                    grip_pos3,
-                    grip_velp3,
-                    goal_pos3, 
-                    goal_rot3
+                    qvel_tem[6:9].copy(),
+                    grip_pos1,
+                    grip_velp1,
+                    goal_pos1, 
+                    goal_rot1
                 ]
             )
 
-            ob5 = np.concatenate(
+            ob1 = np.concatenate(
                 [
                     qpos_tem[:7].copy(),
-                    qpos_tem[22:25].copy(),
+                    qpos_tem[10:13].copy(),
                     qvel_tem[:6].copy(),
-                    qvel_tem[21:24].copy(),
-                    grip_rot3,
-                    grip_velr3,
-                    goal_pos3,
-                    goal_rot3
+                    qvel_tem[9:12].copy(),
+                    grip_rot1,
+                    grip_velr1,
+                    goal_pos1,
+                    goal_rot1
                 ]
             )
+
+            ob2 = np.concatenate(
+                [
+                    qpos_tem[:7].copy(),
+                    qpos_tem[13:16].copy(),
+                    qvel_tem[:6].copy(),
+                    qvel_tem[12:15].copy(),
+                    grip_pos2,
+                    grip_velp2,
+                    goal_pos2,
+                    goal_rot2
+                ]
+            )
+
+            ob3 = np.concatenate(
+                [
+                    qpos_tem[:7].copy(),
+                    qpos_tem[16:19].copy(),
+                    qvel_tem[:6].copy(),
+                    qvel_tem[15:18].copy(),
+                    grip_rot2,
+                    grip_velr2,
+                    goal_pos2,
+                    goal_rot2
+                ]
+            )
+
+            obs_new = [ob0, ob1, ob2, ob3]
 
             # print("reward: ",eval_rewards)
             # print("action: ",np.stack(action).squeeze().reshape(all_args.num_agents,3))
             eval_episode_rewards.append(eval_rewards)
-            error[0,eval_step] = goal_distance(goal_pos3, ob4[19:22])
-            error[1,eval_step] = goal_distance(goal_rot3, ob5[19:22])
-            error[2,eval_step] = goal_distance(env.env.goal, obs[0, 19:22])
-            print(error[1,eval_step])
         print("episode reward: ",np.array(eval_episode_rewards).sum())
         
     print("goal:, ", env.env.goal)
