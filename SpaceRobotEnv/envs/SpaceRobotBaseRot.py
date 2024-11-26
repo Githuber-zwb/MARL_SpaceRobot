@@ -14,7 +14,8 @@ import mujoco_py
 
 PATH = os.getcwd()
 
-MODEL_XML_PATH = os.path.join(PATH,'SpaceRobotEnv','assets', 'spacerobot', 'spacerobot_fourarmgrip.xml')
+# MODEL_XML_PATH = os.path.join(PATH,'SpaceRobotEnv','assets', 'spacerobot', 'spacerobot_fourarmgrip.xml')
+MODEL_XML_PATH = os.path.join(PATH,'SpaceRobotEnv','assets', 'spacerobot', 'spacerobot_fourarm.xml')
 DEFAULT_SIZE = 500
 
 

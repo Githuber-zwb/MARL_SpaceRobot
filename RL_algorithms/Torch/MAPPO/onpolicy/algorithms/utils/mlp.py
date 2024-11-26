@@ -87,7 +87,7 @@ class TransBase(nn.Module):
 
         self.mlp1 = nn.Linear(self._single_obs_dim, self.hidden_size)
 
-        self.enc = nn.TransformerEncoderLayer(self.hidden_size, 4, self.hidden_size)
+        self.enc = nn.TransformerEncoderLayer(self.hidden_size, 4, self.hidden_size // 4)
 
         self.mlp = MLPLayer(obs_dim, self.hidden_size,
                               self._layer_N, self._use_orthogonal, self._use_ReLU)
